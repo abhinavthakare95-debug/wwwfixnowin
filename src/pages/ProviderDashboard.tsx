@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Power, MapPin, Star, Clock, CreditCard, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import GoogleMapComponent from "@/components/GoogleMap";
+import { DEFAULT_CENTER } from "@/lib/maps";
 import { toast } from "sonner";
 
 const mockRequests = [
@@ -65,6 +67,19 @@ const ProviderDashboard = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Navigation Map */}
+        {isOnline && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <h2 className="font-heading text-lg font-semibold text-foreground mb-3">Your Location</h2>
+            <GoogleMapComponent
+              markers={[{ id: 99, lat: DEFAULT_CENTER.lat + 0.003, lng: DEFAULT_CENTER.lng + 0.005, name: "You (Rajesh Kumar)", service: "Mechanic", isUser: true }]}
+              center={DEFAULT_CENTER}
+              zoom={15}
+              className="h-[250px]"
+            />
+          </motion.div>
+        )}
 
         {/* Incoming requests */}
         <h2 className="font-heading text-xl font-semibold text-foreground mb-4">Incoming Requests</h2>

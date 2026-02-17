@@ -5,17 +5,42 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import ServiceCard from "@/components/ServiceCard";
 import ProviderCard from "@/components/ProviderCard";
+import GoogleMapComponent from "@/components/GoogleMap";
 import { services, mockProviders } from "@/lib/data";
+import { providerLocations, DEFAULT_CENTER } from "@/lib/maps";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Services = () => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [locationDetected, setLocationDetected] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const navigate = useNavigate();
 
   const detectLocation = () => {
-    setLocationDetected(true);
-    toast.success("Location detected: Sector 15, Noida");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setLocationDetected(true);
+          toast.success("Location detected via GPS!");
+        },
+        () => {
+          setUserLocation(DEFAULT_CENTER);
+          setLocationDetected(true);
+          toast.success("Location detected: Sector 15, Noida");
+        }
+      );
+    } else {
+      setUserLocation(DEFAULT_CENTER);
+      setLocationDetected(true);
+      toast.success("Location detected: Sector 15, Noida");
+    }
   };
+
+  const filteredMapMarkers = selectedService
+    ? providerLocations.filter((p) => p.service.toLowerCase() === selectedService)
+    : providerLocations;
 
   const filteredProviders = selectedService
     ? mockProviders.filter((p) => p.service.toLowerCase() === selectedService)
@@ -56,6 +81,20 @@ const Services = () => {
           </Button>
         </motion.div>
 
+        {/* Map */}
+        {locationDetected && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
+            <h2 className="font-heading text-lg font-semibold text-foreground mb-3">Nearby Providers</h2>
+            <GoogleMapComponent
+              markers={filteredMapMarkers}
+              userLocation={userLocation}
+              center={userLocation || DEFAULT_CENTER}
+              zoom={14}
+              className="h-[300px]"
+            />
+          </motion.div>
+        )}
+
         {/* Service grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
           {services.map((service, i) => (
@@ -80,7 +119,10 @@ const Services = () => {
                   key={provider.id}
                   provider={provider}
                   index={i}
-                  onSelect={() => toast.success(`Request sent to ${provider.name}! They'll arrive in ${provider.eta}.`)}
+                  onSelect={() => {
+                    toast.success(`Request sent to ${provider.name}! Redirecting to live tracking...`);
+                    setTimeout(() => navigate("/track"), 1500);
+                  }}
                 />
               ))
             ) : (
